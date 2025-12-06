@@ -2003,3 +2003,42 @@ Tabs.More:Button({
         loadstring(game:HttpGet("https://raw.githubusercontent.com/MQPS7/99-Night-in-the-Forset/refs/heads/main/99v2"))()
     end
 })
+Tabs.More:Button({
+    Title = "FoxnameHub - 99 Night in the Forest",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/FoxnameHub.lua"))()
+    end
+})
+Tabs.More:Section({ Title = "Script For Mobile", Icon = "gem" })
+Tabs.More:Button({
+    Title = "infiniteyield",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+    end
+})
+Tabs.More:Button({
+    Title = "Deltakeyboard",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Luckyx999/LUCKY-EXE-HUB/refs/heads/main/Deltakeyboard.lua"))()
+    end
+})
+-- Paragraph
+local Paragraph = Tabs.Credit:Paragraph({
+    Title = "LUCKY-EXE-HUB",
+    Desc = "Credit : Luckyx999",
+    Color = "Red",
+    Image = "rbxassetid://81048676785399",
+    ImageSize = 30,
+    Thumbnail = "rbxassetid://81048676785399",
+    ThumbnailSize = 80,
+    Locked = false,
+    Buttons = {
+        {
+            Title = "Test",
+            Icon = "rbxassetid://81048676785399",
+            Callback = function() 
+                print("1 Button") 
+            end,
+        }
+    }
+})
