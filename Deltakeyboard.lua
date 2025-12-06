@@ -2,7 +2,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Xxtan31/Ata/main/crac
 
 --[[
 	Delta Mobile | Keyboard Script
-	CRACKED MADE BY ATA
+	CRACKED MADE BY LUCKY
 	FUCKİNG SCRİPT SORRY
 ]]
 
