@@ -2105,7 +2105,8 @@ else
         Image = "triangle-alert",
         ImageSize = 26,
         Color = "Red",
-    end
+    })
+end
 })
 Tabs.Credit:Paragraph({
     Title = "LUCKY-EXE-HUB",
