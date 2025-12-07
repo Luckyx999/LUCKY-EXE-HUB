@@ -1,5 +1,3 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Xxtan31/Ata/main/cracked.txt", true))()
-
 --[[
 	Delta Mobile | Keyboard Script
 	CRACKED MADE BY LUCKY
@@ -2241,7 +2239,7 @@ G2L["13c"]["TextSize"] = 14;
 G2L["13c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["13c"]["Size"] = UDim2.new(0, 121, 0, 22);
 G2L["13c"]["Active"] = true;
-G2L["13c"]["Text"] = [[Delta Mobile - Keyboard Crack By ATA]];
+G2L["13c"]["Text"] = [[Delta Mobile - Keyboard Crack By LUCKY EXE]];
 G2L["13c"]["Name"] = [[Title]];
 G2L["13c"]["BackgroundTransparency"] = 1;
 G2L["13c"]["Position"] = UDim2.new(0, 9, 0, 2);
