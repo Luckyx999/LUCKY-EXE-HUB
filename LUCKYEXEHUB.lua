@@ -529,56 +529,67 @@ Window:EditOpenButton({
 -- แท็กเวอร์ชั่่น
 Window:Tag({
     Title = "v0.0.1",
-    Icon = "github",
+    Icon = "gauge",
     Color = Color3.fromHex("#ffffff"),
-    Radius = 1, -- from 0 to 13
+    Radius = 2, -- from 0 to 13
+})
+Window:Tag({
+    Title = "DEV.VER",
+    Icon = "gauge",
+    Color = Color3.fromHex("#ffffff"),
+    Radius = 2, -- from 0 to 13
 })
 -- แท็บต่างๆ
 local Tabs = {}
 Tabs.Main = Window:Tab({
     Title = "Main",
     Icon = "rocket",
-    Desc = "Stellar"
+    Desc = "Main",
 })
 Tabs.Auto = Window:Tab({
     Title = "Auto",
     Icon = "wrench",
-    Desc = "Stellar"
+    Desc = "Auto",
 })
 Tabs.esp = Window:Tab({
     Title = "Esp",
     Icon = "eye",
-    Desc = "Stellar"
+    Desc = "ESP",
 })
 Tabs.br = Window:Tab({
     Title = "Bring",
     Icon = "package",
-    Desc = "Stellar"
+    Desc = "Bring",
 })
 Tabs.Tp = Window:Tab({
     Title = "Teleport",
     Icon = "map",
-    Desc = "Stellar"
+    Desc = "Teleport",
 })
 Tabs.Fly = Window:Tab({
     Title = "Player",
     Icon = "user",
-    Desc = "Stellar"
+    Desc = "Player",
 })
 Tabs.Combat = Window:Tab({
     Title = "Combat",
     Icon = "sword",
-    Desc = "Stellar"
+    Desc = "AutoFarm",
 })
 Tabs.More = Window:Tab({
     Title = "Other",
     Icon = "crown",
-    Desc = "Stellar"
+    Desc = "Other Script",
 })
 Tabs.Misc = Window:Tab({
     Title = "Settings",
     Icon = "settings",
-    Desc = "Stellar"
+    Desc = "Settings config",
+})
+Tabs.Credit = Window:Tab({
+    Title = "Credit",
+    Icon = "info",
+    Desc = "Credit",
 })
 Window:SelectTab(1)
 Tabs.Combat:Section({ Title = "Aura", Icon = "star" })
@@ -682,7 +693,7 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 -- ตัวแปร Click
-local lastClickTime = 0
+local lastClickTime = 0.1
 local clickDelay = 0.1
 -- ฟังก์ชันจำลองการกดปุ่ม Sprint
 local function simulateClick()
