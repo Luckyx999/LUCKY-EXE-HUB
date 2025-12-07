@@ -2023,22 +2023,31 @@ Tabs.More:Button({
     end
 })
 -- Paragraph
-local Paragraph = Tabs.Credit:Paragraph({
+Tabs.Credit:Paragraph({
     Title = "LUCKY-EXE-HUB",
     Desc = "Credit : Luckyx999",
-    Color = "Red",
     Image = "rbxassetid://81048676785399",
-    ImageSize = 30,
+    ImageSize = 34, -- default 30
     Thumbnail = "rbxassetid://81048676785399",
-    ThumbnailSize = 80,
-    Locked = false,
+    ThumbnailSize = 120, -- Thumbnail height
     Buttons = {
         {
-            Title = "Test",
-            Icon = "rbxassetid://81048676785399",
-            Callback = function() 
-                print("1 Button") 
-            end,
-        }
+            Title = "Button 1",
+            Variant = "Primary",
+            Callback = function() print("1 Button") end,
+            Icon = "bird",
+        },
+        {
+            Title = "Button 2",
+            Variant = "Primary",
+            Callback = function() print("2 Button") end,
+            Icon = "bird",
+        },
+        {
+            Title = "Button 3",
+            Variant = "Primary",
+            Callback = function() print("3 Button") end,
+            Icon = "bird",
+        },
     }
 })
