@@ -16,6 +16,79 @@ local toolsDamageIDs = {
     ["Chainsaw"] = "647_8992824875",
     ["Spear"] = "196_8999010016"
 }
+local InviteCode = "invite" — change to your discord invite
+local DiscordAPI = "https://discord.com/api/v10/invites/" .. InviteCode .. "?with_counts=true&with_expiration=true"
+local Response
+local ErrorMessage = nil
+xpcall(function()
+    Response = game:GetService("HttpService"):JSONDecode(WindUI.Creator.Request({
+        Url = DiscordAPI,
+        Method = "GET",
+        Headers = {
+            ["Accept"] = "application/json"
+        }
+    }).Body)
+end, function(err)
+    warn("err fetching discord info: " .. tostring(err))
+    ErrorMessage = tostring(err)
+    Response = nil
+end)
+if Response and Response.guild then
+    local ParagraphConfig = {
+        Title = Response.guild.name,
+        Desc =
+            ' <font color="#52525b">•</font> Member Count: ' .. tostring(Response.approximate_member_count) ..
+            '\n <font color="#16a34a">•</font> Online Count: ' .. tostring(Response.approximate_presence_count)
+        ,
+        Image = "https://cdn.discordapp.com/icons/" .. Response.guild.id .. "/" .. Response.guild.icon .. ".png?size=256",
+        ImageSize = 42,
+        Buttons = {
+            {
+                Icon = "link",
+                Title = "Copy Discord Invite",
+                Callback = function()
+                    pcall(function()
+                        setclipboard("https://discord.gg/" .. InviteCode)
+                    end)
+                end
+            },
+            {
+                Icon = "refresh-cw",
+                Title = "Update Info",
+                Callback = function()
+                    xpcall(function()
+                        local UpdatedResponse = game:GetService("HttpService"):JSONDecode(WindUI.Creator.Request({
+                            Url = DiscordAPI,
+                            Method = "GET",
+                        }).Body)
+                        
+                        if UpdatedResponse and UpdatedResponse.guild then
+                            DiscordInfo:SetDesc(
+                                ' <font color="#52525b">•</font> Member Count: ' .. tostring(UpdatedResponse.approximate_member_count) ..
+                                '\n <font color="#16a34a">•</font> Online Count: ' .. tostring(UpdatedResponse.approximate_presence_count)
+                            )
+                        end
+                    end, function(err)
+                        warn("err updating discord info: " .. tostring(err))
+                    end)
+                end
+            }
+        }
+    }    
+    if Response.guild.banner then
+        ParagraphConfig.Thumbnail = "https://cdn.discordapp.com/banners/" .. Response.guild.id .. "/" .. Response.guild.banner .. ".png?size=256"
+        ParagraphConfig.ThumbnailSize = 80
+    end
+    local DiscordInfo = Tabs.Credit:Paragraph(ParagraphConfig)
+else
+    Tabs.Credit:Paragraph({
+        Title = "Error when receiving information about the Discord server",
+        Desc = ErrorMessage or "Unknown error occurred",
+        Image = "triangle-alert",
+        ImageSize = 26,
+        Color = "Red",
+    })
+end
 -- auto food
 local autoFeedToggle = false
 local selectedFood = "Carrot"
@@ -2033,80 +2106,6 @@ Tabs.More:Button({
     end
 })
 -- Paragraph
-local InviteCode = "invite" — change to your discord invite
-local DiscordAPI = "https://discord.com/api/v10/invites/" .. InviteCode .. "?with_counts=true&with_expiration=true"
-local Response
-local ErrorMessage = nil
-xpcall(function()
-    Response = game:GetService("HttpService"):JSONDecode(WindUI.Creator.Request({
-        Url = DiscordAPI,
-        Method = "GET",
-        Headers = {
-            ["Accept"] = "application/json"
-        }
-    }).Body)
-end, function(err)
-    warn("err fetching discord info: " .. tostring(err))
-    ErrorMessage = tostring(err)
-    Response = nil
-end)
-if Response and Response.guild then
-    local ParagraphConfig = {
-        Title = Response.guild.name,
-        Desc =
-            ' <font color="#52525b">•</font> Member Count: ' .. tostring(Response.approximate_member_count) ..
-            '\n <font color="#16a34a">•</font> Online Count: ' .. tostring(Response.approximate_presence_count)
-        ,
-        Image = "https://cdn.discordapp.com/icons/" .. Response.guild.id .. "/" .. Response.guild.icon .. ".png?size=256",
-        ImageSize = 42,
-        Buttons = {
-            {
-                Icon = "link",
-                Title = "Copy Discord Invite",
-                Callback = function()
-                    pcall(function()
-                        setclipboard("https://discord.gg/" .. InviteCode)
-                    end)
-                end
-            },
-            {
-                Icon = "refresh-cw",
-                Title = "Update Info",
-                Callback = function()
-                    xpcall(function()
-                        local UpdatedResponse = game:GetService("HttpService"):JSONDecode(WindUI.Creator.Request({
-                            Url = DiscordAPI,
-                            Method = "GET",
-                        }).Body)
-                        
-                        if UpdatedResponse and UpdatedResponse.guild then
-                            DiscordInfo:SetDesc(
-                                ' <font color="#52525b">•</font> Member Count: ' .. tostring(UpdatedResponse.approximate_member_count) ..
-                                '\n <font color="#16a34a">•</font> Online Count: ' .. tostring(UpdatedResponse.approximate_presence_count)
-                            )
-                        end
-                    end, function(err)
-                        warn("err updating discord info: " .. tostring(err))
-                    end)
-                end
-            }
-        }
-    }    
-    if Response.guild.banner then
-        ParagraphConfig.Thumbnail = "https://cdn.discordapp.com/banners/" .. Response.guild.id .. "/" .. Response.guild.banner .. ".png?size=256"
-        ParagraphConfig.ThumbnailSize = 80
-    end
-    local DiscordInfo = Tabs.Credit:Paragraph(ParagraphConfig)
-else
-    Tabs.Credit:Paragraph({
-        Title = "Error when receiving information about the Discord server",
-        Desc = ErrorMessage or "Unknown error occurred",
-        Image = "triangle-alert",
-        ImageSize = 26,
-        Color = "Red",
-    })
-end
-})
 Tabs.Credit:Paragraph({
     Title = "LUCKY-EXE-HUB",
     Desc = "Credit : Luckyx999",
@@ -2120,7 +2119,7 @@ Tabs.Credit:Paragraph({
             Variant = "Primary",
             Callback = function() print("1 Button") end,
             Icon = "bird",
-        },
+        }, I'm
         {
             Title = "Button 2",
             Variant = "Primary",
