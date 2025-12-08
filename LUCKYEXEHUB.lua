@@ -498,13 +498,12 @@ local Window = WindUI:CreateWindow({
     Size = UDim2.fromOffset(500, 350),
     Transparent = true,
     Theme = "Dark",
-    SideBarWidth = 200,
+    SideBarWidth = 300,
     Resizable = true,
     BackgroundImageTransparency = 0.42,
     HideSearchBar = true,
     ScrollBarEnabled = false,
     Background = "rbxassetid://81048676785399",
-    
     User = {
         Enabled = true,
         Anonymous = false,
@@ -515,11 +514,11 @@ local Window = WindUI:CreateWindow({
 })
 -- Background Image Settings
 Window:SetBackgroundImage("rbxassetid://81048676785399")
-Window:SetBackgroundImageTransparency(0.8)
+Window:SetBackgroundImageTransparency(0.9)
 -- ปุ่มย่อ
 Window:EditOpenButton({
     Title = "LUCKY EXE - Open",
-    Icon = "rbxassetid://81048676785399",
+    Icon = "scan",
     CornerRadius = UDim.new(0, 6),
     StrokeThickness = 2,
     Color = ColorSequence.new(Color3.fromRGB(30, 30, 30), Color3.fromRGB(255, 255, 255)),
@@ -531,13 +530,13 @@ Window:Tag({
     Title = "v0.0.1",
     Icon = "gauge",
     Color = Color3.fromHex("#ffffff"),
-    Radius = 2, -- from 0 to 13
+    Radius = 0, -- from 0 to 13
 })
 Window:Tag({
     Title = "DEV.VER",
     Icon = "gauge",
     Color = Color3.fromHex("#ffffff"),
-    Radius = 2, -- from 0 to 13
+    Radius = 0, -- from 0 to 13
 })
 -- แท็บต่างๆ
 local Tabs = {}
