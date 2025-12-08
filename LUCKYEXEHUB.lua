@@ -20,7 +20,8 @@ local InviteCode = "invite" -- change to your discord invite
 local DiscordAPI = "https://discord.com/api/v10/invites/" .. InviteCode .. "?with_counts=true&with_expiration=true"
 
 local HttpService = game:GetService("HttpService")
-local Response
+local Response = WindUI.Creator.Request(...)
+Response()
 local ErrorMessage = nil
 
 xpcall(function()
