@@ -671,3 +671,270 @@ local function carWashStep()
 	if prompt then
 		triggerPrompt(prompt)
 		Hub.Stats
+local function carWashStep()
+	if not Hub.AutoCarWash then return false end
+	local prompt = findPrompt("Wash", "Car Wash")
+	if prompt then
+		triggerPrompt(prompt)
+		Hub.Stats.CarWashSides = Hub.Stats.CarWashSides + 1
+		return true
+	end
+	return false
+end
+
+local function windshieldStep()
+	if not Hub.AutoWindshield then return false end
+	local prompt = findPrompt("Windshield", "Wiper")
+	if prompt then
+		triggerPrompt(prompt)
+		Hub.Stats.CarWashSides = Hub.Stats.CarWashSides + 1
+		return true
+	end
+	return false
+end
+
+local function scrapStep()
+	if not Hub.AutoScrap then return false end
+	local prompt = findPrompt("Scrap", "Junk", "Trash")
+	if prompt then
+		triggerPrompt(prompt)
+		Hub.Stats.ScrapsCollected = Hub.Stats.ScrapsCollected + 1
+		return true
+	end
+	return false
+end
+
+local function mechanicStep()
+	if not Hub.AutoBuyProducts then return false end
+	-- Mechanic jobs (oil change, parts install) are prompt-driven like the rest.
+	local prompt = findPrompt("Mechanic", "Repair", "Oil Change")
+	if prompt then
+		triggerPrompt(prompt)
+		Hub.Stats.MechanicSteps = Hub.Stats.MechanicSteps + 1
+		return true
+	end
+	return false
+end
+
+--══════════════════════════════════════════════════════════════════════════
+-- SECTION 17 — PURCHASE + STATION UPGRADE STEPS   [RECONSTRUCTED]
+--══════════════════════════════════════════════════════════════════════════
+-- The scheduler calls:  if not stationUpgradeStep() then purchaseStep() end
+-- i.e. upgrades first, purchases second, and each step only acts once
+-- per scheduler tick.
+
+local purchaseStep = function()
+	-- order matters: fuel first (keeps the pumps running), then products
+	if buyFuelStep() then return true end
+	if buyProductStep() then return true end
+	return false
+end
+
+local function stationUpgradeStep()
+	if not Hub.AutoStationUpgrades then return false end
+	local station = workspace:FindFirstChild("Station")
+	if not station then return false end
+	local nowTime = now()
+	if nowTime < Hub.NextUpgradeCheck then return false end -- only check every UpgradeCheckInterval seconds
+	Hub.NextUpgradeCheck = nowTime + Hub.UpgradeCheckInterval
+
+	local spendable = availableFunds("Station")
+	if spendable <= 0 then return false end
+
+	-- "Prioritize expansion": expansions (new bays / bigger storage) first.
+	local upgrades = {}
+	for _, child in ipairs(station:GetDescendants()) do
+		if child:IsA("ProximityPrompt") and child.Enabled then
+			local text = (tostring(child.PromptText or "") .. " " .. tostring(child.ActionText or "")):lower()
+			local price = child:GetAttribute("Price") or 0
+			local isExpansion = text:find("expand", 1, true) or text:find("expansion", 1, true) or text:find("storage", 1, true)
+			if price > 0 and price <= Hub.UpgradeSpendCap and price <= spendable then
+				table.insert(upgrades, { Prompt = child, Price = price, Expansion = isExpansion })
+			end
+		end
+	end
+	if #upgrades == 0 then return false end
+
+	table.sort(upgrades, function(a, b)
+		if a.Expansion ~= b.Expansion then return a.Expansion end -- expansions first
+		if a.Price == b.Price then return a.Prompt.PromptText < b.Prompt.PromptText end
+		return a.Price < b.Price
+	end)
+
+	local choice = upgrades[1]
+	triggerPrompt(choice.Prompt)
+	Hub.Stats.StationUpgrades = (Hub.Stats.StationUpgrades or 0) + 1
+	return true
+end
+
+--══════════════════════════════════════════════════════════════════════════
+-- SECTION 18 — MAIN WORK STEP                    [RECONSTRUCTED]
+--══════════════════════════════════════════════════════════════════════════
+-- One job action per tick. Priority: cashier/scan > refuel > restock >
+-- clean > car wash > windshield > scrap > mechanic.
+local function workStep()
+	if cashierStep() then return true end
+	if refuelStep() then return true end
+	if restockStep() then return true end
+	if cleanStep() then return true end
+	if carWashStep() then return true end
+	if windshieldStep() then return true end
+	if scrapStep() then return true end
+	if mechanicStep() then return true end
+	return false
+end
+--══════════════════════════════════════════════════════════════════════════
+-- SECTION 19 — WINDUI LIBRARY + HUB WINDOW
+--══════════════════════════════════════════════════════════════════════════
+-- Loader is RECONSTRUCTED (the original fetches WindUI from its official
+-- raw URL the same way every WindUI hub does).
+local WindUI = nil
+local uiOk, uiError = pcall(function()
+	WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+end)
+
+local Window, StatusComponent, BudgetComponent, StatsComponent = nil, nil, nil, nil
+
+if uiOk and WindUI then
+	Window = WindUI:CreateWindow({
+		Title = "ZSS Hub",
+		Icon = "fuel",
+		Theme = "Dark",
+		Folder = "ZSSAutomation",
+		Size = UDim2.fromOffset(720, 480),
+		MinSize = Vector2.new(640, 400),
+	})
+
+	-- MAIN TAB
+	local Main = Window:Tab({ Title = "Main", Icon = "home" })
+	Main:Label({ Title = "Status" })
+	StatusComponent = Main:Label({ Title = "Current status", Desc = Hub.Status })
+	BudgetComponent = Main:Label({ Title = "Budget", Desc = "Calculating..." })
+	StatsComponent = Main:Label({ Title = "Stats", Desc = "Waiting..." })
+
+	Main:Divider({ Title = "Jobs" })
+	Main:Toggle({ Title = "Auto cashier", Desc = "Scans and checks out customers", Value = Hub.AutoCashier, Callback = function(v) Hub.AutoCashier = v end })
+	Main:Toggle({ Title = "Auto refuel", Desc = "Refuels customer cars at the pumps", Value = Hub.AutoRefuel, Callback = function(v) Hub.AutoRefuel = v end })
+	Main:Toggle({ Title = "Auto restock", Desc = "Moves stock from storage onto shelves", Value = Hub.AutoRestock, Callback = function(v) Hub.AutoRestock = v end })
+	Main:Toggle({ Title = "Auto clean", Desc = "Cleans spills and trash", Value = Hub.AutoClean, Callback = function(v) Hub.AutoClean = v end })
+	Main:Toggle({ Title = "Auto car wash", Desc = "Washes cars at the wash bay", Value = Hub.AutoCarWash, Callback = function(v) Hub.AutoCarWash = v end })
+	Main:Toggle({ Title = "Auto windshield", Desc = "Cleans windshields", Value = Hub.AutoWindshield, Callback = function(v) Hub.AutoWindshield = v end })
+	Main:Toggle({ Title = "Auto scrap", Desc = "Collects scrap and junk", Value = Hub.AutoScrap, Callback = function(v) Hub.AutoScrap = v end })
+	Main:Toggle({ Title = "Auto buy fuel", Desc = "Buys fuel packages for the pumps", Value = Hub.AutoBuyFuel, Callback = function(v) Hub.AutoBuyFuel = v end })
+	Main:Toggle({ Title = "Auto buy products", Desc = "Buys shop products and mechanic parts", Value = Hub.AutoBuyProducts, Callback = function(v) Hub.AutoBuyProducts = v end })
+
+	Main:Button({ Title = "Stop hub", Desc = "Saves settings and stops all automation", Icon = "power", Callback = function() Hub.Stop() end })
+
+	-- BUDGET TAB   [VERBATIM from current main]
+	local Budget = Window:Tab({ Title = "Budget", Icon = "wallet" })
+	Budget:Label({ Title = "Protected reserve", Desc = "Calculating protected funds", Image = "shield-check", ImageSize = 22 })
+	Budget:Toggle({ Title = "Auto station upgrades", Desc = "Buys expansions and improvements only above the protected reserve", Value = Hub.AutoStationUpgrades, Callback = function(value) Hub.AutoStationUpgrades = value end })
+	Budget:Toggle({ Title = "Cheapest shop purchases", Desc = "Buys the cheapest fuel package and one cheapest item per order", Value = Hub.CheapestPurchases, Callback = function(value) Hub.CheapestPurchases = value end })
+	Budget:Toggle({ Title = "Prioritize expansion", Desc = "Prefers station and storage expansion before optional upgrades", Value = Hub.ExpansionPriority, Callback = function(value) Hub.ExpansionPriority = value end })
+	Budget:Slider({ Title = "Minimum station reserve", Desc = "Cash never used for purchasing or upgrades", Step = 10, Value = { Min = 0, Max = 2000, Default = Hub.MinimumStationReserve }, Callback = function(value) Hub.MinimumStationReserve = value end })
+	Budget:Slider({ Title = "Bill reserve multiplier", Desc = "Multiplier applied to Station.EstBills", Step = 0.25, Value = { Min = 1, Max = 5, Default = Hub.BillReserveMultiplier }, Callback = function(value) Hub.BillReserveMultiplier = value end })
+	Budget:Slider({ Title = "Extra bill buffer", Desc = "Additional protected cash above estimated bills", Step = 5, Value = { Min = 0, Max = 500, Default = Hub.BillExtraBuffer }, Callback = function(value) Hub.BillExtraBuffer = value end })
+	Budget:Slider({ Title = "Maximum upgrade price", Desc = "Skips individual upgrades above this price", Step = 10, Value = { Min = 20, Max = 2000, Default = Hub.UpgradeSpendCap }, Callback = function(value) Hub.UpgradeSpendCap = value end })
+	Budget:Button({ Title = "Save settings now", Desc = "Writes all options to ZSS_Automation_Settings.json", Icon = "save", Callback = function() saveSettings(); setStatus("Settings saved") end })
+
+	-- SYSTEM TAB   [VERBATIM from current main]
+	local System = Window:Tab({ Title = "System", Icon = "settings" })
+	System:Toggle({ Title = "Auto stamina recovery", Desc = "Uses the real effective stamina percentage", Value = Hub.AutoStamina, Callback = function(value) Hub.AutoStamina = value end })
+	System:Toggle({ Title = "Auto retire", Desc = "Waits for server confirmation before counting retirement", Value = Hub.AutoRetire, Callback = function(value) Hub.AutoRetire = value end })
+	System:Slider({ Title = "Scheduler interval", Desc = "Delay between coordinated checks", Step = 0.01, Value = { Min = 0.05, Max = 0.5, Default = Hub.Interval }, Callback = function(value) Hub.Interval = math.max(0.05, value) end })
+	System:Slider({ Title = "Rest below", Desc = "Effective stamina percentage that starts recovery", Step = 1, Value = { Min = 10, Max = 90, Default = math.floor(Hub.RestLow * 100 + 0.5) }, Callback = function(value) Hub.RestLow = value / 100 end })
+	System:Slider({ Title = "Resume above", Desc = "Effective stamina percentage that resumes work", Step = 1, Value = { Min = 20, Max = 100, Default = math.floor(Hub.RestHigh * 100 + 0.5) }, Callback = function(value) Hub.RestHigh = value / 100 end })
+	System:Slider({ Title = "Fuel buy threshold", Desc = "Tank percentage that starts purchasing", Step = 1, Value = { Min = 0, Max = 50, Default = math.floor(Hub.FuelThreshold * 100 + 0.5) }, Callback = function(value) Hub.FuelThreshold = value / 100 end })
+	System:Slider({ Title = "Mechanic minimum stock", Desc = "Part amount that starts purchasing", Step = 1, Value = { Min = 0, Max = 10, Default = Hub.MechanicMinimum }, Callback = function(value) Hub.MechanicMinimum = math.floor(value) end })
+
+	WindUI:Notify({ Title = "ZSS Hub", Content = "WindUI loaded with the optimized scheduler", Icon = "check", Duration = 4 })
+end
+
+if not uiOk then
+	warn("[ZSS HUB] WindUI failed: " .. tostring(uiError))
+end
+--══════════════════════════════════════════════════════════════════════════
+-- SECTION 20 — HUB STOP                       [VERBATIM]
+--══════════════════════════════════════════════════════════════════════════
+function Hub.Stop()
+	saveSettings()
+	Hub.Enabled = false
+	for _, connection in pairs(Hub.Connections) do
+		pcall(function()
+			connection:Disconnect()
+		end)
+	end
+	table.clear(Hub.Connections)
+	if Hub.Window then
+		pcall(function()
+			Hub.Window:Destroy()
+		end)
+	end
+	setStatus("Stopped")
+end
+
+--══════════════════════════════════════════════════════════════════════════
+-- SECTION 21 — STATUS UI REFRESH               [VERBATIM]
+--══════════════════════════════════════════════════════════════════════════
+local lastUiUpdate = 0
+local function updateStatusUi()
+	if now() - lastUiUpdate < 1 then
+		return
+	end
+	lastUiUpdate = now()
+	if StatusComponent then
+		pcall(function()
+			StatusComponent:SetDesc(Hub.Status)
+		end)
+	end
+	if BudgetComponent then
+		local reserve = stationReserve()
+		local money = rawFunds("Station")
+		local spendable = availableFunds("Station")
+		pcall(function() BudgetComponent:SetDesc(string.format("Station $%.2f | Bills $%.2f | Protected $%.2f | Spendable $%.2f", money, estimatedBills(), reserve, spendable)) end)
+	end
+	if StatsComponent then
+		local s = Hub.Stats
+		local text = string.format("Stock %d | Clean %d | Scan %d | Refuel %d | Wash %d | Scrap %d | Mech %d | Upgrades %d", s.Restocked, s.Cleaned, s.Scanned, s.CarsRefueled, s.CarWashSides, s.ScrapsCollected, s.MechanicSteps, s.StationUpgrades or 0)
+		pcall(function()
+			StatsComponent:SetDesc(text)
+		end)
+	end
+end
+
+--══════════════════════════════════════════════════════════════════════════
+-- SECTION 22 — MAIN SCHEDULER LOOP             [VERBATIM]
+--══════════════════════════════════════════════════════════════════════════
+-- Every tick: resolve pending confirmations, then (unless paused) try
+-- upgrades -> purchases -> stamina -> one work job. Wrapped in pcall so a
+-- single bad tick never kills the loop.
+task.spawn(function()
+	while Hub.Enabled do
+		local started = now()
+		local ok, errorMessage = pcall(function()
+			resolvePendingStack()
+			resolvePendingScrap()
+			resolveRetirement()
+			if not Hub.Paused then
+				if not stationUpgradeStep() then purchaseStep() end
+				local resting = staminaStep()
+				if not resting and not characterBusy() then
+					if not workStep() and Hub.Status ~= "Energy restored" then
+						setStatus("Idle")
+					end
+				end
+			else
+				setStatus("Paused")
+			end
+			updateStatusUi()
+		end)
+		if not ok then
+			setStatus("Scheduler error: " .. tostring(errorMessage))
+			warn("[ZSS HUB] " .. tostring(errorMessage))
+		end
+		local elapsed = now() - started
+		task.wait(math.max(0.03, Hub.Interval - elapsed))
+	end
+end)
+
+print("[ZSS HUB] Started with WindUI and 0.3 second scheduler")
