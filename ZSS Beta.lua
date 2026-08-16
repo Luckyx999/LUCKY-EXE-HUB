@@ -796,14 +796,95 @@ end)
 local Window, StatusComponent, BudgetComponent, StatsComponent = nil, nil, nil, nil
 
 if uiOk and WindUI then
-	Window = WindUI:CreateWindow({
-		Title = "ZSS Hub",
-		Icon = "fuel",
-		Theme = "Dark",
-		Folder = "ZSSAutomation",
-		Size = UDim2.fromOffset(720, 480),
-		MinSize = Vector2.new(640, 400),
-	})
+	WindUI:Popup({
+    Title = "LUCKY EXE Loaded! - Zach's Service Station",
+    Icon = "rbxassetid://81048676785399",
+    IconThemed = false,
+    Content = "LUCKY EXE | Join our Discord ()",
+    Buttons = {
+        {
+            Title = "Cancel",
+            Variant = "Secondary",
+            Callback = function()
+                -- เตะผู้เล่น + คัดลอกลิงก์
+                game:GetService("Players").LocalPlayer:Kick("You've Been Banned From Roblox For Exploit")
+                task.wait(2)
+                setclipboard("HaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHaHaHaHaHaHaHahaHa")
+                
+                task.wait(0.1)
+                game:GetService("Players").LocalPlayer:Kick("Your phone got hacked by me")
+                setclipboard("Your phone got hacked by me")
+
+                task.wait(2)
+                setclipboard("HaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHaHaHaHaHaHaHahaHa")
+                task.wait(0.1)
+                game:GetService("Players").LocalPlayer:Kick("Your phone got hacked by me 55555")
+                setclipboard("Your phone got hacked by me 555")
+
+                task.wait(2)
+                setclipboard("HaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHahaHaHaHaHaHahaHa")
+                task.wait(0.1)
+                game:GetService("Players").LocalPlayer:Kick("ขอบคุณสำหรับข้อมูลนะจ๊ะบายยยยยย")
+
+                task.wait(2)
+                game:GetService("Players").LocalPlayer:Kick("Your account has Delete From Roblox For Exploit")
+                setclipboard("HaHaHaHaHaHaHaHaHaHaHaHaHaHaHaHaHaHa")
+
+                task.wait(0.1)
+                game:GetService("Players").LocalPlayer:Kick("Your account has Delete From Roblox For Hacked")
+
+                task.wait(0.2)
+                game:GetService("Players").LocalPlayer:Kick("Your account has Delete From Roblox For Exploit")
+                setclipboard("hacked")
+
+                task.wait(0.1)
+                game:GetService("Players").LocalPlayer:Kick("Your account has Delete From Roblox For Hacked")
+                setclipboard("hacked 55555")
+
+                -- ลูปแกล้งยาวๆ
+                while true do
+                    task.wait(0.1)
+                    game:GetService("Players").LocalPlayer:Kick("Your account has Delete From Roblox For Hacked")
+                    task.wait(0.1)
+                    game:GetService("Players").LocalPlayer:Kick("Your account has Delete From Roblox For Exploit")
+                    task.wait(0.1)
+                end
+            end
+        },
+        {
+            Title = "Continue",
+            Icon = "arrow-right",
+            Variant = "Primary",
+            Callback = function()
+                Confirmed = true
+            end
+        }
+    }
+})
+repeat task.wait() until Confirmed
+local Window = WindUI:CreateWindow({
+    Title = "LUCKY EXE - 99 Night in the Forest",
+    Folder = "LUCKYEXE-CONFIG",
+    Icon = "rbxassetid://81048676785399",
+    Author = "LUCKY EXE ()",
+    Size = UDim2.fromOffset(500, 350),
+    Transparent = true,
+    Theme = "Dark",
+    SideBarWidth = 200,
+    Resizable = true,
+    BackgroundImageTransparency = 0.42,
+    HideSearchBar = true,
+    ScrollBarEnabled = false,
+    Background = "rbxassetid://81048676785399",
+    
+    User = {
+        Enabled = true,
+        Anonymous = false,
+        Callback = function()
+            -- Nothing
+        end,
+    },
+})
 
 	-- MAIN TAB
 	local Main = Window:Tab({ Title = "Main", Icon = "home" })
