@@ -1,0 +1,85 @@
+--══════════════════════════════════════════════════════════════════════════
+-- SECTION 20 — HUB STOP                       [VERBATIM]
+--══════════════════════════════════════════════════════════════════════════
+function Hub.Stop()
+	saveSettings()
+	Hub.Enabled = false
+	for _, connection in pairs(Hub.Connections) do
+		pcall(function()
+			connection:Disconnect()
+		end)
+	end
+	table.clear(Hub.Connections)
+	if Hub.Window then
+		pcall(function()
+			Hub.Window:Destroy()
+		end)
+	end
+	setStatus("Stopped")
+end
+
+--══════════════════════════════════════════════════════════════════════════
+-- SECTION 21 — STATUS UI REFRESH               [VERBATIM]
+--══════════════════════════════════════════════════════════════════════════
+local lastUiUpdate = 0
+local function updateStatusUi()
+	if now() - lastUiUpdate < 1 then
+		return
+	end
+	lastUiUpdate = now()
+	if StatusComponent then
+		pcall(function()
+			StatusComponent:SetDesc(Hub.Status)
+		end)
+	end
+	if BudgetComponent then
+		local reserve = stationReserve()
+		local money = rawFunds("Station")
+		local spendable = availableFunds("Station")
+		pcall(function() BudgetComponent:SetDesc(string.format("Station $%.2f | Bills $%.2f | Protected $%.2f | Spendable $%.2f", money, estimatedBills(), reserve, spendable)) end)
+	end
+	if StatsComponent then
+		local s = Hub.Stats
+		local text = string.format("Stock %d | Clean %d | Scan %d | Refuel %d | Wash %d | Scrap %d | Mech %d | Upgrades %d", s.Restocked, s.Cleaned, s.Scanned, s.CarsRefueled, s.CarWashSides, s.ScrapsCollected, s.MechanicSteps, s.StationUpgrades or 0)
+		pcall(function()
+			StatsComponent:SetDesc(text)
+		end)
+	end
+end
+
+--══════════════════════════════════════════════════════════════════════════
+-- SECTION 22 — MAIN SCHEDULER LOOP             [VERBATIM]
+--══════════════════════════════════════════════════════════════════════════
+-- Every tick: resolve pending confirmations, then (unless paused) try
+-- upgrades -> purchases -> stamina -> one work job. Wrapped in pcall so a
+-- single bad tick never kills the loop.
+task.spawn(function()
+	while Hub.Enabled do
+		local started = now()
+		local ok, errorMessage = pcall(function()
+			resolvePendingStack()
+			resolvePendingScrap()
+			resolveRetirement()
+			if not Hub.Paused then
+				if not stationUpgradeStep() then purchaseStep() end
+				local resting = staminaStep()
+				if not resting and not characterBusy() then
+					if not workStep() and Hub.Status ~= "Energy restored" then
+						setStatus("Idle")
+					end
+				end
+			else
+				setStatus("Paused")
+			end
+			updateStatusUi()
+		end)
+		if not ok then
+			setStatus("Scheduler error: " .. tostring(errorMessage))
+			warn("[ZSS HUB] " .. tostring(errorMessage))
+		end
+		local elapsed = now() - started
+		task.wait(math.max(0.03, Hub.Interval - elapsed))
+	end
+end)
+
+print("[ZSS HUB] Started with WindUI and 0.3 second scheduler")

@@ -1,0 +1,112 @@
+local function carWashStep()
+	if not Hub.AutoCarWash then return false end
+	local prompt = findPrompt("Wash", "Car Wash")
+	if prompt then
+		triggerPrompt(prompt)
+		Hub.Stats.CarWashSides = Hub.Stats.CarWashSides + 1
+		return true
+	end
+	return false
+end
+
+local function windshieldStep()
+	if not Hub.AutoWindshield then return false end
+	local prompt = findPrompt("Windshield", "Wiper")
+	if prompt then
+		triggerPrompt(prompt)
+		Hub.Stats.CarWashSides = Hub.Stats.CarWashSides + 1
+		return true
+	end
+	return false
+end
+
+local function scrapStep()
+	if not Hub.AutoScrap then return false end
+	local prompt = findPrompt("Scrap", "Junk", "Trash")
+	if prompt then
+		triggerPrompt(prompt)
+		Hub.Stats.ScrapsCollected = Hub.Stats.ScrapsCollected + 1
+		return true
+	end
+	return false
+end
+
+local function mechanicStep()
+	if not Hub.AutoBuyProducts then return false end
+	-- Mechanic jobs (oil change, parts install) are prompt-driven like the rest.
+	local prompt = findPrompt("Mechanic", "Repair", "Oil Change")
+	if prompt then
+		triggerPrompt(prompt)
+		Hub.Stats.MechanicSteps = Hub.Stats.MechanicSteps + 1
+		return true
+	end
+	return false
+end
+
+--══════════════════════════════════════════════════════════════════════════
+-- SECTION 17 — PURCHASE + STATION UPGRADE STEPS   [RECONSTRUCTED]
+--══════════════════════════════════════════════════════════════════════════
+-- The scheduler calls:  if not stationUpgradeStep() then purchaseStep() end
+-- i.e. upgrades first, purchases second, and each step only acts once
+-- per scheduler tick.
+
+local purchaseStep = function()
+	-- order matters: fuel first (keeps the pumps running), then products
+	if buyFuelStep() then return true end
+	if buyProductStep() then return true end
+	return false
+end
+
+local function stationUpgradeStep()
+	if not Hub.AutoStationUpgrades then return false end
+	local station = workspace:FindFirstChild("Station")
+	if not station then return false end
+	local nowTime = now()
+	if nowTime < Hub.NextUpgradeCheck then return false end -- only check every UpgradeCheckInterval seconds
+	Hub.NextUpgradeCheck = nowTime + Hub.UpgradeCheckInterval
+
+	local spendable = availableFunds("Station")
+	if spendable <= 0 then return false end
+
+	-- "Prioritize expansion": expansions (new bays / bigger storage) first.
+	local upgrades = {}
+	for _, child in ipairs(station:GetDescendants()) do
+		if child:IsA("ProximityPrompt") and child.Enabled then
+			local text = (tostring(child.PromptText or "") .. " " .. tostring(child.ActionText or "")):lower()
+			local price = child:GetAttribute("Price") or 0
+			local isExpansion = text:find("expand", 1, true) or text:find("expansion", 1, true) or text:find("storage", 1, true)
+			if price > 0 and price <= Hub.UpgradeSpendCap and price <= spendable then
+				table.insert(upgrades, { Prompt = child, Price = price, Expansion = isExpansion })
+			end
+		end
+	end
+	if #upgrades == 0 then return false end
+
+	table.sort(upgrades, function(a, b)
+		if a.Expansion ~= b.Expansion then return a.Expansion end -- expansions first
+		if a.Price == b.Price then return a.Prompt.PromptText < b.Prompt.PromptText end
+		return a.Price < b.Price
+	end)
+
+	local choice = upgrades[1]
+	triggerPrompt(choice.Prompt)
+	Hub.Stats.StationUpgrades = (Hub.Stats.StationUpgrades or 0) + 1
+	return true
+end
+
+--══════════════════════════════════════════════════════════════════════════
+-- SECTION 18 — MAIN WORK STEP                    [RECONSTRUCTED]
+--══════════════════════════════════════════════════════════════════════════
+-- One job action per tick. Priority: cashier/scan > refuel > restock >
+-- clean > car wash > windshield > scrap > mechanic.
+local function workStep()
+	if cashierStep() then return true end
+	if refuelStep() then return true end
+	if restockStep() then return true end
+	if cleanStep() then return true end
+	if carWashStep() then return true end
+	if windshieldStep() then return true end
+	if scrapStep() then return true end
+	if mechanicStep() then return true end
+	return false
+end
